@@ -3,6 +3,10 @@
 This is a software to make the task of sending bulk emails to a list of contacts
 easier.
 
+## Installation
+
+    $ pip install mailipy
+
 In order to send emails, you need to first **generate** them and later **send**
 them.
 
