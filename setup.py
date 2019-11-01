@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="mailipy",
-    version="0.0.1",
+    version="0.0.2",
     author="William Di Luigi",
     author_email="williamdiluigi@gmail.com",
     description="Bulk send emails easily",
