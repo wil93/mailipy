@@ -2,6 +2,8 @@
 
 from:     "ITACPC <noreply@itacpc.it>"
 to:       "{{Email}}"
+cc:       []
+bcc:      []
 subject:  "Invito per il terzo round di allenamento delle ITACPC"
 msgid:    "<%s@itacpc.it>"
 attach:   []

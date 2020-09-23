@@ -95,6 +95,10 @@ def main():
 
         msg["From"] = config["from"]
         msg["To"] = config["to"]
+        if "cc" in config:
+            msg["Cc"] = ", ".join(filter(bool, config["cc"]))
+        if "bcc" in config:
+            msg["Bcc"] = ", ".join(filter(bool, config["bcc"]))
         msg["Subject"] = config["subject"]
         msg["Date"] = email.utils.formatdate()
         msg["Message-Id"] = config["msgid"] % (datetime.datetime.now().strftime("%s") + str(random.random()))

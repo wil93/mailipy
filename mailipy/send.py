@@ -49,8 +49,20 @@ def main():
         for eml in emails:
             msg = email.message_from_file(open(os.path.join(args.outbox, eml)))
             try:
-                print("Sending email to %s..." % (msg["To"]))
-                server.sendmail(msg["From"], msg["To"], msg.as_string())
+                rcpt = [msg["To"]]
+                extra = []
+                if "Cc" in msg:
+                    rcpt += msg["Cc"].split(", ")
+                    extra += ["cc: " + msg["Cc"]]
+                if "Bcc" in msg:
+                    rcpt += msg["Bcc"].split(", ")
+                    extra += ["bcc: " + msg["Bcc"]]
+                if extra:
+                    extra = " (%s)" % " | ".join(extra)
+                else:
+                    extra = ""
+                print("Sending email to %s%s..." % (msg["To"], extra))
+                server.sendmail(msg["From"], rcpt, msg.as_string())
 
                 # On success, move the message from the outbox to the sent folder
                 shutil.move(os.path.join(args.outbox, eml), os.path.join(args.sent, eml))
