@@ -35,10 +35,6 @@ BASE_HTML = """<!DOCTYPE html>
 </html>"""
 
 
-def render_template(template, data):
-    return jinja2.Environment(loader=jinja2.BaseLoader).from_string(template).render(data)
-
-
 def main():
     parser = argparse.ArgumentParser(description="Generate emails to bulk send later.")
     parser.add_argument("template", help="a Markdown formatted document with a YAML front-matter")
@@ -79,6 +75,13 @@ def main():
     if not os.path.exists(args.outbox):
         os.mkdir(args.outbox)
 
+    # jinja2 with builtin support (e.g. zip, len, max, ...)
+    env = jinja2.Environment(loader=jinja2.BaseLoader)
+    env.globals.update(__builtins__)
+
+    def render_template(template, data):
+        return env.from_string(template).render(data)
+
     count = 0
 
     for data in contacts:
@@ -88,7 +91,7 @@ def main():
 
         # Load the email text from after the front matter
         text = render_template(match.group(4), data)
-        html = markdown.markdown(text)
+        html = markdown.markdown(text, extensions=['tables'])
         html = BASE_HTML.format(body=html)
 
         msg = MIMEMultipart("alternative")
