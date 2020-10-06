@@ -40,6 +40,7 @@ def main():
     parser.add_argument("template", help="a Markdown formatted document with a YAML front-matter")
     parser.add_argument("contacts", help="a CSV file with the contacts whom to send emails to")
     parser.add_argument("outbox", nargs="?", default="outbox", help="a folder where to save the emails (default: outbox)")
+    parser.add_argument("--print", "-p", action="store_true", help="print to stdout the rendered Markdown")
     args = parser.parse_args()
 
     if (not os.path.isfile(args.template)) or (not args.template.lower().endswith(".md")):
@@ -91,6 +92,10 @@ def main():
 
         # Load the email text from after the front matter
         text = render_template(match.group(4), data)
+        if args.print:
+            print(text)
+        else:
+            print("\r%4d / %4d" % (count + 1, len(contacts)), end="", flush=True)
         html = markdown.markdown(text, extensions=['tables'])
         html = BASE_HTML.format(body=html)
 
@@ -127,6 +132,8 @@ def main():
 
         count += 1
 
+    if not args.print:
+        print()  # The cursor is still at the middle of the line
     print("Created %d mails in '%s', ready to be sent" % (count, args.outbox))
 
 
