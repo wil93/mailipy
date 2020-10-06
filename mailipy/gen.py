@@ -102,9 +102,14 @@ def main():
             msg["Cc"] = ", ".join(filter(bool, config["cc"]))
         if "bcc" in config:
             msg["Bcc"] = ", ".join(filter(bool, config["bcc"]))
+        if "reply-to" in config:
+            msg["Reply-To"] = config["reply-to"]
         msg["Subject"] = config["subject"]
         msg["Date"] = email.utils.formatdate()
         msg["Message-Id"] = config["msgid"] % (datetime.datetime.now().strftime("%s") + str(random.random()))
+        if "extra-headers" in config:
+            for (key, value) in config["extra-headers"].items():
+                msg[key] = value
 
         msg.attach(MIMEText(text, "plain"))
         msg.attach(MIMEText(html, "html"))
