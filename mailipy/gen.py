@@ -4,6 +4,7 @@ import argparse
 import csv
 import datetime
 import email.utils
+import mimetypes
 import os
 import random
 import re
@@ -33,6 +34,30 @@ BASE_HTML = """<!DOCTYPE html>
         {body}
     </body>
 </html>"""
+
+
+def create_attachment(main_msg, file_path):
+    content_type, encoding = mimetypes.guess_type(file_path)
+
+    if content_type is None or encoding is not None:
+        content_type = 'application/octet-stream'
+    main_type = content_type.split('/')[0]
+    if main_type == 'text':
+        with open(file_path, 'rb') as fp:
+            msg = MIMEText(fp.read())
+    elif main_type == 'image':
+        with open(file_path, 'rb') as fp:
+            msg = MIMEImage(fp.read())
+    elif main_type == 'audio':
+        with open(file_path, 'rb') as fp:
+            msg = MIMEAudio(fp.read())
+    else:
+        with open(file_path, 'rb') as fp:
+            msg = MIMEApplication(fp.read())
+
+    filename = os.path.basename(file_path)
+    msg.add_header('Content-Disposition', 'attachment', filename=filename)
+    main_msg.attach(msg)
 
 
 def main():
@@ -94,7 +119,7 @@ def main():
         html = markdown.markdown(text, extensions=['tables'])
         html = BASE_HTML.format(body=html)
 
-        msg = MIMEMultipart("alternative")
+        msg = MIMEMultipart("mixed")
 
         msg["From"] = config["from"]
         msg["To"] = config["to"]
@@ -111,16 +136,15 @@ def main():
             for (key, value) in config["extra-headers"].items():
                 msg[key] = value
 
-        msg.attach(MIMEText(text, "plain"))
-        msg.attach(MIMEText(html, "html"))
+        msg_alt = MIMEMultipart("alternative")
+        msg_alt.attach(MIMEText(text, "plain"))
+        msg_alt.attach(MIMEText(html, "html"))
+
+        msg.attach(msg_alt)
 
         # Attach files if necessary
         for f in config["attach"]:
-            with open(f, "rb") as fil:
-                part = MIMEApplication(fil.read(), Name=f)
-            # After the file is closed
-            part["Content-Disposition"] = "attachment; filename=\"%s\"" % f
-            msg.attach(part)
+            create_attachment(msg, f)
 
         # Write the .eml file
         eml_filename = msg["To"].split("@")[0] + "-"
