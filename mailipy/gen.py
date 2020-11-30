@@ -12,6 +12,8 @@ import smtplib
 import sys
 from email.generator import Generator
 from email.mime.application import MIMEApplication
+from email.mime.audio import MIMEAudio
+from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
