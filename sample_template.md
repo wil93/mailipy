@@ -28,12 +28,12 @@ Saremmo felici se {{ArticoloUniversità}}{{Università}} prendesse parte a quest
 gara!
 
 - Le iscrizioni per gli studenti della sua università sono accessibili alla
-  pagina [https://teams.itacpc.it/{{Uni}}](https://teams.itacpc.it/{{Uni}})
+  pagina <https://teams.itacpc.it/{{Uni}}>
 - I problemi sono in lingua inglese. Maggiori informazioni si potranno ottenere
-  sul sito [https://itacpc.it](https://itacpc.it).
+  sul [sito della competizione](https://itacpc.it).
 - La durata è di **4 ore**.
 
 Per qualsiasi domanda può contattarci.
 
-Cordiali Saluti,<br>
+Cordiali Saluti,  
 Lo Staff delle ITACPC.
