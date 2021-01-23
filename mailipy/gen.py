@@ -8,7 +8,6 @@ import mimetypes
 import os
 import random
 import re
-import smtplib
 import sys
 from email.generator import Generator
 from email.mime.application import MIMEApplication
@@ -20,6 +19,7 @@ from email.mime.text import MIMEText
 import jinja2
 import markdown
 import yaml
+
 
 YAML_FRONT_MATTER = r"\A(---\s*\n.*?\n?)^((---|\.\.\.)\s*$\n?)(.*)"
 BASE_HTML = """<!DOCTYPE html>
@@ -39,11 +39,13 @@ BASE_HTML = """<!DOCTYPE html>
 
 
 def create_attachment(main_msg, file_path):
-    content_type, encoding = mimetypes.guess_type(file_path)
+    content_type, _ = mimetypes.guess_type(file_path)
 
-    if content_type is None or encoding is not None:
+    if content_type is None:
         content_type = 'application/octet-stream'
+
     main_type = content_type.split('/')[0]
+
     if main_type == 'text':
         with open(file_path, 'rb') as fp:
             msg = MIMEText(fp.read())
@@ -60,6 +62,29 @@ def create_attachment(main_msg, file_path):
     filename = os.path.basename(file_path)
     msg.add_header('Content-Disposition', 'attachment', filename=filename)
     main_msg.attach(msg)
+
+
+def embed_image(main_msg, image_path, cid):
+    content_type, _ = mimetypes.guess_type(image_path)
+
+    if content_type is None:
+        content_type = 'application/octet-stream'
+
+    main_type = content_type.split('/')[0]
+
+    if main_type != 'image':
+        print(f"Error: the {image_path} file does not seem to be an image.")
+        return
+
+    with open(image_path, 'rb') as fp:
+        msg = MIMEImage(fp.read())
+
+        filename = os.path.basename(image_path)
+        msg.add_header('Content-Disposition', 'attachment', filename=filename)
+        msg.add_header('X-Attachment-Id', f'{cid}')
+        msg.add_header('Content-ID', f'<{cid}>')
+
+        main_msg.attach(msg)
 
 
 def main():
@@ -124,16 +149,27 @@ def main():
         msg = MIMEMultipart("mixed")
 
         msg["From"] = config["from"]
-        msg["To"] = config["to"]
+
+        # This is necessary to support the case where "to:" contains a single string (maybe we can drop this use-case though...)
+        if not isinstance(config["to"], list):
+            # Convert string to a list with one string
+            config["to"] = [config["to"]]
+
+        msg["To"] = ', '.join(filter(bool, config["to"]))
+
         if "cc" in config:
             msg["Cc"] = ", ".join(filter(bool, config["cc"]))
+
         if "bcc" in config:
             msg["Bcc"] = ", ".join(filter(bool, config["bcc"]))
+
         if "reply-to" in config:
             msg["Reply-To"] = config["reply-to"]
+
         msg["Subject"] = config["subject"]
         msg["Date"] = email.utils.formatdate()
         msg["Message-Id"] = config["msgid"] % (datetime.datetime.now().strftime("%s") + str(random.random()))
+
         if "extra-headers" in config:
             for (key, value) in config["extra-headers"].items():
                 msg[key] = value
@@ -144,9 +180,13 @@ def main():
 
         msg.attach(msg_alt)
 
-        # Attach files if necessary
+        # Attach files
         for f in config["attach"]:
             create_attachment(msg, f)
+
+        # Embed images
+        for image in config["images"]:
+            embed_image(msg, image["path"], image["cid"])
 
         # Write the .eml file
         eml_filename = msg["To"].split("@")[0] + "-"

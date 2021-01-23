@@ -1,16 +1,19 @@
 ---
 
 from:     "ITACPC <noreply@itacpc.it>"
-to:       "{{Email}}"
+to:       ["{{Email}}"]
 cc:       []
 bcc:      []
 subject:  "Invito per il terzo round di allenamento delle ITACPC"
 msgid:    "<%s@itacpc.it>"
 attach:   []
+images:
+  - path: "./logo.png"
+    cid: 0
 
 ---
 
-![ITACPC logo](https://teams.itacpc.it/static/logo.png "ITACPC logo")
+![](cid:0)
 
 Salve {{Titolo}} {{Cognome}},
 

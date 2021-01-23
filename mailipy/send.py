@@ -16,15 +16,18 @@ def main():
     parser.add_argument("username", help="the username to login on the mail server")
     parser.add_argument("outbox", help="the folder where to access the emails that should be sent")
     parser.add_argument("sent", nargs="?", default="sent", help="the folder where to move the emails sent (default: sent)")
+    parser.add_argument("--continue", help="continue sending, even if the 'sent' folder is not empty", action="store_true", dest="continue_")
     args = parser.parse_args()
 
     if (not os.path.isdir(args.outbox)) or len(os.listdir(args.outbox)) == 0:
         print("The outbox folder should contain some emails!")
         sys.exit(1)
 
-    if os.path.exists(args.sent) and ((not os.path.isdir(args.sent)) or len(os.listdir(args.sent)) > 0):
-        print("The sent folder should be an empty folder, or not exist at all!")
-        sys.exit(1)
+    # FIXME: skip the check if --continue was specified... but actually we should still check that: 'sent' is a directory AND it doesn't contain files which also exist in 'outbox'
+    if not args.continue_:
+        if os.path.exists(args.sent) and ((not os.path.isdir(args.sent)) or len(os.listdir(args.sent)) > 0):
+            print("The sent folder should be an empty folder, or not exist at all!")
+            sys.exit(1)
 
     host, port = args.server.split(":")
     port = int(port)
