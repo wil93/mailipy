@@ -198,6 +198,11 @@ def main():
 
         count += 1
 
+        # Print progress information
+        print("\r%4d / %4d" % (count, len(contacts)), end="", flush=True)
+
+    # The cursor is still at the middle of the line
+    print()
     print("Created %d mails in '%s', ready to be sent" % (count, args.outbox))
 
 
