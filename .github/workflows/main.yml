@@ -1,0 +1,18 @@
+name: Release Python package to PyPI
+on:
+  push:
+    paths:
+      - "setup.py"
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prepare release
+        run: "./new_release.sh"
+      - name: Upload release
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          skip_existing: true
+          user: __token__
+          password: ${{ secrets.PYPI_API_TOKEN }}
