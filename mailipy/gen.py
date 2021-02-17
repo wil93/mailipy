@@ -4,6 +4,7 @@ import argparse
 import csv
 import datetime
 import email.utils
+import json
 import mimetypes
 import os
 import random
@@ -130,6 +131,8 @@ def main():
     # jinja2 with builtin support (e.g. zip, len, max, ...)
     env = jinja2.Environment(loader=jinja2.BaseLoader)
     env.globals.update(__builtins__)
+    # allow json.loads inside a template
+    env.globals.update(json=json)
 
     def render_template(template, data):
         return env.from_string(template).render(data)
