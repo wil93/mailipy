@@ -38,6 +38,8 @@ BASE_HTML = """<!DOCTYPE html>
     </body>
 </html>"""
 
+csv.field_size_limit(sys.maxsize)
+
 
 def create_attachment(main_msg, file_path):
     content_type, _ = mimetypes.guess_type(file_path)
