@@ -17,6 +17,7 @@ def main():
     parser.add_argument("outbox", help="the folder where to access the emails that should be sent")
     parser.add_argument("sent", nargs="?", default="sent", help="the folder where to move the emails sent (default: sent)")
     parser.add_argument("--continue", help="continue sending, even if the 'sent' folder is not empty", action="store_true", dest="continue_")
+    parser.add_argument("--ssl", help="SSL mode to use", choices=["auto", "none", "starttls", "ssl"], default="auto")
     args = parser.parse_args()
 
     if (not os.path.isdir(args.outbox)) or len(os.listdir(args.outbox)) == 0:
@@ -41,36 +42,61 @@ def main():
     print("You are about to send %d emails." % len(emails))
     password = getpass.getpass("Password for %s@%s: " % (args.username, args.server))
 
-    context=ssl.create_default_context()
-    with smtplib.SMTP_SSL(host, port, context=context) as server:
-        server.login(args.username, password)
+    server = None
+    # First try to connect with SSL (which is the most secure of the options)
+    if args.ssl in ("auto", "ssl"):
+        try:
+            context = ssl.create_default_context()
+            server = smtplib.SMTP_SSL(host, port, context=context)
+        except ssl.SSLError:
+            print("[!] SSL connection failed!")
+            # If SSL was explicitely requested, fail on error
+            if args.ssl == "ssl":
+                raise
 
-        # Create sent folder if necessary
-        if not os.path.exists(args.sent):
-            os.mkdir(args.sent)
-
-        for eml in emails:
-            msg = email.message_from_file(open(os.path.join(args.outbox, eml)))
+    # SSL failed, but we can still try to connect without SSL
+    if not server:
+        server = smtplib.SMTP(host, port)
+        if args.ssl in ("auto", "starttls"):
             try:
-                rcpt = [msg["To"]]
-                extra = []
-                if "Cc" in msg:
-                    rcpt += msg["Cc"].split(", ")
-                    extra += ["cc: " + msg["Cc"]]
-                if "Bcc" in msg:
-                    rcpt += msg["Bcc"].split(", ")
-                    extra += ["bcc: " + msg["Bcc"]]
-                if extra:
-                    extra = " (%s)" % " | ".join(extra)
-                else:
-                    extra = ""
-                print("Sending email to %s%s..." % (msg["To"], extra))
-                server.sendmail(msg["From"], rcpt, msg.as_string())
-
-                # On success, move the message from the outbox to the sent folder
-                shutil.move(os.path.join(args.outbox, eml), os.path.join(args.sent, eml))
+                server.starttls()
             except:
-                print("[!] Error when sending email to %s" % (msg["To"]))
+                print("[!] STARTTLS failed")
+                # If STARTTLS was explicitely requested, fail on error
+                if args.ssl == "starttls":
+                    raise
+
+    server.login(args.username, password)
+    send_emails(server, emails, args.outbox, args.sent)
+
+
+def send_emails(server, emails, outbox_dir, sent_dir):
+    # Create sent folder if necessary
+    if not os.path.exists(sent_dir):
+        os.mkdir(sent_dir)
+
+    for eml in emails:
+        msg = email.message_from_file(open(os.path.join(outbox_dir, eml)))
+        try:
+            rcpt = [msg["To"]]
+            extra = []
+            if "Cc" in msg:
+                rcpt += msg["Cc"].split(", ")
+                extra += ["cc: " + msg["Cc"]]
+            if "Bcc" in msg:
+                rcpt += msg["Bcc"].split(", ")
+                extra += ["bcc: " + msg["Bcc"]]
+            if extra:
+                extra = " (%s)" % " | ".join(extra)
+            else:
+                extra = ""
+            print("Sending email to %s%s..." % (msg["To"], extra))
+            server.sendmail(msg["From"], rcpt, msg.as_string())
+
+            # On success, move the message from the outbox to the sent folder
+            shutil.move(os.path.join(outbox_dir, eml), os.path.join(sent_dir, eml))
+        except:
+            print("[!] Error when sending email to %s" % (msg["To"]))
 
 
 if __name__ == "__main__":
