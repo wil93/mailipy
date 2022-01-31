@@ -17,6 +17,8 @@ def main():
     parser.add_argument("outbox", help="the folder where to access the emails that should be sent")
     parser.add_argument("sent", nargs="?", default="sent", help="the folder where to move the emails sent (default: sent)")
     parser.add_argument("--continue", help="continue sending, even if the 'sent' folder is not empty", action="store_true", dest="continue_")
+    parser.add_argument("--password", "-p", help="password for the SMTP server", action="store")
+    parser.add_argument("--password-stdin", help="read the password from standard input", action="store_true")
     args = parser.parse_args()
 
     if (not os.path.isdir(args.outbox)) or len(os.listdir(args.outbox)) == 0:
@@ -39,7 +41,12 @@ def main():
         sys.exit(1)
 
     print("You are about to send %d emails." % len(emails))
-    password = getpass.getpass("Password for %s@%s: " % (args.username, args.server))
+    if args.password is not None:
+        password = args.password
+    elif args.password_stdin:
+        password = input("Password for %s@%s: " % (args.username, args.server))
+    else:
+        password = getpass.getpass("Password for %s@%s: " % (args.username, args.server))
 
     context=ssl.create_default_context()
     with smtplib.SMTP_SSL(host, port, context=context) as server:
