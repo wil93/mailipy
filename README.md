@@ -34,3 +34,21 @@ directory accordingly):
 
 The command will inform you of how many emails are going to be sent, and then
 will prompt you for a password.
+
+# Contributing
+
+You can make changes to the [`gen.py`](./mailipy/gen.py) and
+[`send.py`](./mailipy/send.py) scripts, and test these changes by running a
+local version of Mailipy. After testing your changes, you can open a pull
+request.
+
+## Running a local version of Mailipy
+
+1. Make sure you have [pipenv](https://pipenv.pypa.io/) installed in your
+   system.
+2. Run `pipenv install` followed by `pipenv shell` from the root of the source
+   directory.
+3. Now you can run `mailipy-gen` and `mailipy-send`, and these will include your
+   local changes. You can verify that you're running a different binary than the
+   one installed with `pip` by running `which mailipy-gen`: the command will
+   return the full path of the binary you're using.
