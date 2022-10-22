@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import argparse
 import csv
 import datetime
@@ -20,6 +19,7 @@ from email.mime.text import MIMEText
 import jinja2
 import markdown
 import yaml
+import base64
 
 
 YAML_FRONT_MATTER = r"\A(---\s*\n.*?\n?)^((---|\.\.\.)\s*$\n?)(.*)"
@@ -108,11 +108,11 @@ def main():
         sys.exit(1)
 
     # Read template file
-    with open(args.template, "r") as mdfile:
+    with open(args.template, "r", encoding='utf-8') as mdfile:
         template = mdfile.read()
 
     # Read contacts file
-    with open(args.contacts, "r") as csvfile:
+    with open(args.contacts, "r", encoding='utf-8') as csvfile:
         contacts = list(csv.DictReader(csvfile))
 
     if len(contacts) == 0:
@@ -151,7 +151,8 @@ def main():
 
         msg = MIMEMultipart("mixed")
 
-        msg["From"] = config["from"]
+        msg["From"] = convertFrom(config["from"])
+        #print(msg["From"])
 
         # This is necessary to support the case where "to:" contains a single string (maybe we can drop this use-case though...)
         if not isinstance(config["to"], list):
@@ -171,7 +172,7 @@ def main():
 
         msg["Subject"] = config["subject"]
         msg["Date"] = email.utils.formatdate()
-        msg["Message-Id"] = config["msgid"] % (datetime.datetime.now().strftime("%s") + str(random.random()))
+        msg["Message-Id"] = config["msgid"] % (datetime.datetime.now().strftime("%S") + str(random.random()))
 
         if "extra-headers" in config:
             for (key, value) in config["extra-headers"].items():
@@ -208,6 +209,9 @@ def main():
     print()
     print("Created %d mails in '%s', ready to be sent" % (count, args.outbox))
 
+def convertFrom(s):
+    m = re.match(r'(?P<name>[^\<]*?)<(?P<mail>.*)?>', s)
+    return ("=?utf-8?b?%s?=<" + m['mail'] + ">") % (base64.b64encode(m['name'].encode('utf-8')).decode('utf-8'),)
 
 if __name__ == "__main__":
     main()
