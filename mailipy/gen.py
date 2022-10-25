@@ -38,7 +38,7 @@ BASE_HTML = """<!DOCTYPE html>
     </body>
 </html>"""
 
-csv.field_size_limit(sys.maxsize)
+csv.field_size_limit(10 * 1024 * 1024) # 10 MB
 
 
 def create_attachment(main_msg, file_path):
