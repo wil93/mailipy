@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
+
 import argparse
+import base64
 import csv
 import datetime
 import email.utils
@@ -19,7 +21,6 @@ from email.mime.text import MIMEText
 import jinja2
 import markdown
 import yaml
-import base64
 
 
 YAML_FRONT_MATTER = r"\A(---\s*\n.*?\n?)^((---|\.\.\.)\s*$\n?)(.*)"
