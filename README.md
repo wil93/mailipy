@@ -48,7 +48,9 @@ request.
    system.
 2. Run `pipenv install` followed by `pipenv shell` from the root of the source
    directory.
-3. Now you can run `mailipy-gen` and `mailipy-send`, and these will include your
+3. Install by running `python setup.py install` from the root of the source
+   directory.
+4. Now you can run `mailipy-gen` and `mailipy-send`, and these will include your
    local changes. You can verify that you're running a different binary than the
    one installed with `pip` by running `which mailipy-gen`: the command will
    return the full path of the binary you're using.
