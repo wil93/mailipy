@@ -166,7 +166,7 @@ def main():
 
         msg = MIMEMultipart("mixed")
 
-        msg["From"] = render_from(email.utils.parseaddr(config["from"]))
+        msg["From"] = render_from(*email.utils.parseaddr(config["from"]))
 
         # This is necessary to support the case where "to:" contains a single string (maybe we can drop this use-case though...)
         if not isinstance(config["to"], list):
