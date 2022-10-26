@@ -88,6 +88,18 @@ def embed_image(main_msg, image_path, cid):
         main_msg.attach(msg)
 
 
+# This is necessary because otherwise the entire From header will be encoded
+# with =?...?= and that seems to break some SMTP servers.
+def render_from(name, email):
+    if len(name) == 0:
+        return email
+
+    if name.isascii():
+        return f"{name} <{email}>"
+
+    return f"=?utf-8?b?{base64.b64encode(name.encode()).decode()}?= <{email}>"
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate emails to bulk send later.")
     parser.add_argument("template", help="a Markdown formatted document with a YAML front-matter")
@@ -151,8 +163,7 @@ def main():
 
         msg = MIMEMultipart("mixed")
 
-        msg["From"] = convertFrom(config["from"])
-        #print(msg["From"])
+        msg["From"] = render_from(email.utils.parseaddr(config["from"]))
 
         # This is necessary to support the case where "to:" contains a single string (maybe we can drop this use-case though...)
         if not isinstance(config["to"], list):
@@ -172,7 +183,7 @@ def main():
 
         msg["Subject"] = config["subject"]
         msg["Date"] = email.utils.formatdate()
-        msg["Message-Id"] = config["msgid"] % (datetime.datetime.now().strftime("%S") + str(random.random()))
+        msg["Message-Id"] = config["msgid"] % (str(int(datetime.datetime.timestamp(datetime.datetime.now()))) + str(random.random()))
 
         if "extra-headers" in config:
             for (key, value) in config["extra-headers"].items():
@@ -209,9 +220,6 @@ def main():
     print()
     print("Created %d mails in '%s', ready to be sent" % (count, args.outbox))
 
-def convertFrom(s):
-    m = re.match(r'(?P<name>[^\<]*?)<(?P<mail>.*)?>', s)
-    return ("=?utf-8?b?%s?=<" + m['mail'] + ">") % (base64.b64encode(m['name'].encode('utf-8')).decode('utf-8'),)
 
 if __name__ == "__main__":
     main()
