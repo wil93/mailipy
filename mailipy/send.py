@@ -8,7 +8,7 @@ import shutil
 import smtplib
 import ssl
 import sys
-
+import time
 
 def main():
     parser = argparse.ArgumentParser(description="Bulk send emails from the 'outbox' folder.")
@@ -18,6 +18,8 @@ def main():
     parser.add_argument("sent", nargs="?", default="sent", help="the folder where to move the emails sent (default: sent)")
     parser.add_argument("--continue", help="continue sending, even if the 'sent' folder is not empty", action="store_true", dest="continue_")
     parser.add_argument("--ssl", help="SSL mode to use", choices=["auto", "none", "starttls", "ssl"], default="auto")
+    parser.add_argument("--sleep", help="sleep a few second after send every mail", default=0)
+
     args = parser.parse_args()
 
     if (not os.path.isdir(args.outbox)) or len(os.listdir(args.outbox)) == 0:
@@ -95,7 +97,9 @@ def send_emails(server, emails, outbox_dir, sent_dir):
 
             # On success, move the message from the outbox to the sent folder
             shutil.move(os.path.join(outbox_dir, eml), os.path.join(sent_dir, eml))
-        except:
+            time.sleep(int(args.sleep))
+
+    except:
             print("[!] Error when sending email to %s" % (msg["To"]))
 
 
