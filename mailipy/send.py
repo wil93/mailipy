@@ -10,13 +10,19 @@ import ssl
 import sys
 
 
+def read_password_from_file(file_path):
+    with open(file_path) as f:
+        return f.readline().strip()
+
+
 def main():
     parser = argparse.ArgumentParser(description="Bulk send emails from the 'outbox' folder.")
     parser.add_argument("server", help="the URL of the SMTP server, including the port")
-    parser.add_argument("username", help="the username to login on the mail server")
+    parser.add_argument("username", help="the username to login to the mail server")
     parser.add_argument("outbox", help="the folder where to access the emails that should be sent")
     parser.add_argument("sent", nargs="?", default="sent", help="the folder where to move the emails sent (default: sent)")
     parser.add_argument("--continue", help="continue sending, even if the 'sent' folder is not empty", action="store_true", dest="continue_")
+    parser.add_argument("--password-file", help="path to a file containing the password to login to the mail server")
     parser.add_argument("--ssl", help="SSL mode to use", choices=["auto", "none", "starttls", "ssl"], default="auto")
     args = parser.parse_args()
 
@@ -30,6 +36,10 @@ def main():
             print("The sent folder should be an empty folder, or not exist at all!")
             sys.exit(1)
 
+    password = None
+    if args.password_file:
+        password = read_password_from_file(args.password_file)
+
     host, port = args.server.split(":")
     port = int(port)
 
@@ -40,7 +50,10 @@ def main():
         sys.exit(1)
 
     print("You are about to send %d emails." % len(emails))
-    password = getpass.getpass("Password for %s@%s: " % (args.username, args.server))
+    if password is None:
+        password = getpass.getpass("Password for %s@%s: " % (args.username, args.server))
+    else:
+        getpass.getpass("Press [Enter] to confirm: ")
 
     server = None
     # First try to connect with SSL (which is the most secure of the options)
