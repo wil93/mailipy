@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import base64
 import csv
 import datetime
 import email.utils
@@ -37,6 +38,8 @@ BASE_HTML = """<!DOCTYPE html>
         {body}
     </body>
 </html>"""
+
+csv.field_size_limit(10 * 1024 * 1024) # 10 MB
 
 
 def create_attachment(main_msg, file_path):
@@ -88,6 +91,18 @@ def embed_image(main_msg, image_path, cid):
         main_msg.attach(msg)
 
 
+# This is necessary because otherwise the entire From header will be encoded
+# with =?...?= and that seems to break some SMTP servers.
+def render_from(name, email):
+    if len(name) == 0:
+        return email
+
+    if name.isascii():
+        return f"{name} <{email}>"
+
+    return f"=?utf-8?b?{base64.b64encode(name.encode()).decode()}?= <{email}>"
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate emails to bulk send later.")
     parser.add_argument("template", help="a Markdown formatted document with a YAML front-matter")
@@ -108,11 +123,11 @@ def main():
         sys.exit(1)
 
     # Read template file
-    with open(args.template, "r") as mdfile:
+    with open(args.template, "r", encoding='utf-8') as mdfile:
         template = mdfile.read()
 
     # Read contacts file
-    with open(args.contacts, "r") as csvfile:
+    with open(args.contacts, "r", encoding='utf-8') as csvfile:
         contacts = list(csv.DictReader(csvfile))
 
     if len(contacts) == 0:
@@ -151,7 +166,7 @@ def main():
 
         msg = MIMEMultipart("mixed")
 
-        msg["From"] = config["from"]
+        msg["From"] = render_from(*email.utils.parseaddr(config["from"]))
 
         # This is necessary to support the case where "to:" contains a single string (maybe we can drop this use-case though...)
         if not isinstance(config["to"], list):
@@ -171,7 +186,7 @@ def main():
 
         msg["Subject"] = config["subject"]
         msg["Date"] = email.utils.formatdate()
-        msg["Message-Id"] = config["msgid"] % (datetime.datetime.now().strftime("%s") + str(random.random()))
+        msg["Message-Id"] = config["msgid"] % (str(int(datetime.datetime.timestamp(datetime.datetime.now()))) + str(random.random()))
 
         if "extra-headers" in config:
             for (key, value) in config["extra-headers"].items():
