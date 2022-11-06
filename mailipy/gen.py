@@ -199,11 +199,11 @@ def main():
         msg.attach(msg_alt)
 
         # Attach files
-        for f in config["attach"]:
+        for f in config.get("attach", []):
             create_attachment(msg, f)
 
         # Embed images
-        for image in config["images"]:
+        for image in config.get("images", []):
             embed_image(msg, image["path"], image["cid"])
 
         # Write the .eml file
