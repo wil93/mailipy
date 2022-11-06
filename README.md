@@ -1,4 +1,6 @@
-<img width="120" alt="Mailipy Logo" src="./logo.png" />
+<p align="center">
+   <img width="120" alt="Mailipy Logo" src="./logo.png" />
+</p>
 
 # Mailipy
 
