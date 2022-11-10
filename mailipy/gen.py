@@ -127,7 +127,7 @@ def main():
         template = mdfile.read()
 
     # Read contacts file
-    with open(args.contacts, "r", encoding='utf-8') as csvfile:
+    with open(args.contacts, "r", encoding='utf-8-sig') as csvfile:
         contacts = list(csv.DictReader(csvfile))
 
     if len(contacts) == 0:
