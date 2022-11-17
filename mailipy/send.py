@@ -94,10 +94,10 @@ def send_emails(server, emails, outbox_dir, sent_dir ,sleep):
             else:
                 extra = ""
             print("Sending email to %s%s..." % (msg["To"], extra))
-            #server.sendmail(msg["From"], rcpt, msg.as_string())
+            server.sendmail(msg["From"], rcpt, msg.as_string())
 
             # On success, move the message from the outbox to the sent folder
-            #shutil.move(os.path.join(outbox_dir, eml), os.path.join(sent_dir, eml))
+            shutil.move(os.path.join(outbox_dir, eml), os.path.join(sent_dir, eml))
         except :
             print("[!] Error when sending email to %s" % (msg["To"]))
 
