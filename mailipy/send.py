@@ -4,11 +4,13 @@ import argparse
 import email
 import getpass
 import os
+import random
 import shutil
 import smtplib
 import ssl
 import sys
 import time
+
 
 def main():
     parser = argparse.ArgumentParser(description="Bulk send emails from the 'outbox' folder.")
@@ -19,7 +21,6 @@ def main():
     parser.add_argument("--continue", help="continue sending, even if the 'sent' folder is not empty", action="store_true", dest="continue_")
     parser.add_argument("--ssl", help="SSL mode to use", choices=["auto", "none", "starttls", "ssl"], default="auto")
     parser.add_argument("--sleep", help="sleep a few second after send every mail", default=0)
-
     args = parser.parse_args()
 
     if (not os.path.isdir(args.outbox)) or len(os.listdir(args.outbox)) == 0:
@@ -69,10 +70,10 @@ def main():
                     raise
 
     server.login(args.username, password)
-    send_emails(server, emails, args.outbox, args.sent)
+    send_emails(server, emails, args.outbox, args.sent, args.sleep)
 
 
-def send_emails(server, emails, outbox_dir, sent_dir):
+def send_emails(server, emails, outbox_dir, sent_dir ,sleep):
     # Create sent folder if necessary
     if not os.path.exists(sent_dir):
         os.mkdir(sent_dir)
@@ -93,14 +94,17 @@ def send_emails(server, emails, outbox_dir, sent_dir):
             else:
                 extra = ""
             print("Sending email to %s%s..." % (msg["To"], extra))
-            server.sendmail(msg["From"], rcpt, msg.as_string())
+            #server.sendmail(msg["From"], rcpt, msg.as_string())
 
             # On success, move the message from the outbox to the sent folder
-            shutil.move(os.path.join(outbox_dir, eml), os.path.join(sent_dir, eml))
-            time.sleep(int(args.sleep))
-
-    except:
+            #shutil.move(os.path.join(outbox_dir, eml), os.path.join(sent_dir, eml))
+        except :
             print("[!] Error when sending email to %s" % (msg["To"]))
+
+        sleep= int(sleep)
+        if sleep > 0:
+            time.sleep(sleep)
+        print("sleep"+str(sleep))
 
 
 if __name__ == "__main__":
