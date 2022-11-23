@@ -123,7 +123,7 @@ def main():
         sys.exit(1)
 
     # Read template file
-    with open(args.template, "r", encoding='utf-8') as mdfile:
+    with open(args.template, "r", encoding='utf-8-sig') as mdfile:
         template = mdfile.read()
 
     # Read contacts file
