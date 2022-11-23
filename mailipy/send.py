@@ -75,7 +75,7 @@ def main():
         if args.ssl in ("auto", "starttls"):
             try:
                 server.starttls()
-            except:
+            except Exception:
                 print("[!] STARTTLS failed")
                 # If STARTTLS was explicitely requested, fail on error
                 if args.ssl == "starttls":
@@ -110,7 +110,7 @@ def send_emails(server, emails, outbox_dir, sent_dir, sleep_after_send):
 
             # On success, move the message from the outbox to the sent folder
             shutil.move(os.path.join(outbox_dir, eml), os.path.join(sent_dir, eml))
-        except:
+        except Exception:
             print("[!] Error when sending email to %s" % (msg["To"]))
 
         if sleep_after_send > 0:

@@ -7,7 +7,7 @@ setuptools.setup(
     author_email="williamdiluigi@gmail.com",
     description="Bulk send emails easily",
     packages=setuptools.find_packages(),
-    entry_points = {
+    entry_points={
         "console_scripts": [
             "mailipy-gen=mailipy.gen:main",
             "mailipy-send=mailipy.send:main",
