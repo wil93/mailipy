@@ -72,7 +72,7 @@ def main():
     send_emails(server, emails, args.outbox, args.sent, args.sleep)
 
 
-def send_emails(server, emails, outbox_dir, sent_dir, sleep):
+def send_emails(server, emails, outbox_dir, sent_dir, sleep_after_send):
     # Create sent folder if necessary
     if not os.path.exists(sent_dir):
         os.mkdir(sent_dir)
@@ -100,8 +100,8 @@ def send_emails(server, emails, outbox_dir, sent_dir, sleep):
         except:
             print("[!] Error when sending email to %s" % (msg["To"]))
 
-        if sleep > 0:
-            time.sleep(sleep)
+        if sleep_after_send > 0:
+            time.sleep(sleep_after_send)
 
 
 if __name__ == "__main__":
