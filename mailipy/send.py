@@ -8,6 +8,7 @@ import shutil
 import smtplib
 import ssl
 import sys
+import time
 
 
 def read_password_from_file(file_path):
@@ -24,6 +25,7 @@ def main():
     parser.add_argument("--continue", help="continue sending, even if the 'sent' folder is not empty", action="store_true", dest="continue_")
     parser.add_argument("--password-file", help="path to a file containing the password to login to the mail server")
     parser.add_argument("--ssl", help="SSL mode to use", choices=["auto", "none", "starttls", "ssl"], default="auto")
+    parser.add_argument("--sleep", help="seconds to wait after each sent email", default=0)
     args = parser.parse_args()
 
     if (not os.path.isdir(args.outbox)) or len(os.listdir(args.outbox)) == 0:
@@ -80,10 +82,10 @@ def main():
                     raise
 
     server.login(args.username, password)
-    send_emails(server, emails, args.outbox, args.sent)
+    send_emails(server, emails, args.outbox, args.sent, args.sleep)
 
 
-def send_emails(server, emails, outbox_dir, sent_dir):
+def send_emails(server, emails, outbox_dir, sent_dir, sleep_after_send):
     # Create sent folder if necessary
     if not os.path.exists(sent_dir):
         os.mkdir(sent_dir)
@@ -110,6 +112,9 @@ def send_emails(server, emails, outbox_dir, sent_dir):
             shutil.move(os.path.join(outbox_dir, eml), os.path.join(sent_dir, eml))
         except:
             print("[!] Error when sending email to %s" % (msg["To"]))
+
+        if sleep_after_send > 0:
+            time.sleep(sleep_after_send)
 
 
 if __name__ == "__main__":
