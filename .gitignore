@@ -1,6 +1,10 @@
+outbox/
+sent/
 build/
 dist/
 mailipy.egg-info/
 __pycache__/
 *.swp
+*.orig
+*.rej
 .DS_Store
