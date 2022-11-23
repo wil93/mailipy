@@ -25,7 +25,7 @@ def main():
     parser.add_argument("--continue", help="continue sending, even if the 'sent' folder is not empty", action="store_true", dest="continue_")
     parser.add_argument("--password-file", help="path to a file containing the password to login to the mail server")
     parser.add_argument("--ssl", help="SSL mode to use", choices=["auto", "none", "starttls", "ssl"], default="auto")
-    parser.add_argument("--sleep", help="seconds to wait after each sent email", default=0)
+    parser.add_argument("--sleep", help="seconds to wait after each sent email", type=int, default=0)
     args = parser.parse_args()
 
     if (not os.path.isdir(args.outbox)) or len(os.listdir(args.outbox)) == 0:
