@@ -4,10 +4,11 @@ import shutil
 
 from mailipy.gen import generate_emails
 
+
 def test_create_two_emails(tmp_path):
-    shutil.copy('logo.png', os.path.join(tmp_path, 'logo.png'));
-    shutil.copy('logo.png', os.path.join(tmp_path, 'test.png'));
-    
+    shutil.copy('logo.png', os.path.join(tmp_path, 'logo.png'))
+    shutil.copy('logo.png', os.path.join(tmp_path, 'test.png'))
+
     os.chdir(tmp_path)
 
     outbox = 'outbox'
