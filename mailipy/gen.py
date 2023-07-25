@@ -103,33 +103,7 @@ def render_from(name, email):
     return f"=?utf-8?b?{base64.b64encode(name.encode()).decode()}?= <{email}>"
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Generate emails to bulk send later.")
-    parser.add_argument("template", help="a Markdown formatted document with a YAML front-matter")
-    parser.add_argument("contacts", help="a CSV file with the contacts whom to send emails to")
-    parser.add_argument("outbox", nargs="?", default="outbox", help="a folder where to save the emails (default: outbox)")
-    args = parser.parse_args()
-
-    if (not os.path.isfile(args.template)) or (not args.template.lower().endswith(".md")):
-        print("The template file should be a Markdown file!")
-        sys.exit(1)
-
-    if (not os.path.isfile(args.contacts)) or (not args.contacts.lower().endswith(".csv")):
-        print("The contacts file should be a CSV file!")
-        sys.exit(1)
-
-    if os.path.exists(args.outbox) and ((not os.path.isdir(args.outbox)) or len(os.listdir(args.outbox)) > 0):
-        print("The outbox folder should be an empty folder, or not exist at all!")
-        sys.exit(1)
-
-    # Read template file
-    with open(args.template, "r", encoding='utf-8-sig') as mdfile:
-        template = mdfile.read()
-
-    # Read contacts file
-    with open(args.contacts, "r", encoding='utf-8-sig') as csvfile:
-        contacts = list(csv.DictReader(csvfile))
-
+def generate_emails(template: str, contacts: list[dict], outbox: str):
     if len(contacts) == 0:
         print("No contacts found!")
         sys.exit(1)
@@ -140,8 +114,8 @@ def main():
         sys.exit(1)
 
     # Create the outbox folder if necessary
-    if not os.path.exists(args.outbox):
-        os.mkdir(args.outbox)
+    if not os.path.exists(outbox):
+        os.mkdir(outbox)
 
     # jinja2 with builtin support (e.g. zip, len, max, ...)
     env = jinja2.Environment(loader=jinja2.BaseLoader)
@@ -210,7 +184,7 @@ def main():
         eml_filename = msg["To"].split("@")[0] + "-"
         eml_filename += "".join(filter(lambda c: '0' <= c <= '9', msg["Message-Id"]))
         eml_filename += ".eml"
-        with open(os.path.join(args.outbox, eml_filename), "w") as outfile:
+        with open(os.path.join(outbox, eml_filename), "w") as outfile:
             gen = Generator(outfile)
             gen.flatten(msg)
 
@@ -221,7 +195,37 @@ def main():
 
     # The cursor is still at the middle of the line
     print()
-    print("Created %d mails in '%s', ready to be sent" % (count, args.outbox))
+    print("Created %d mails in '%s', ready to be sent" % (count, outbox))
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Generate emails to bulk send later.")
+    parser.add_argument("template", help="a Markdown formatted document with a YAML front-matter")
+    parser.add_argument("contacts", help="a CSV file with the contacts whom to send emails to")
+    parser.add_argument("outbox", nargs="?", default="outbox", help="a folder where to save the emails (default: outbox)")
+    args = parser.parse_args()
+
+    if (not os.path.isfile(args.template)) or (not args.template.lower().endswith(".md")):
+        print("The template file should be a Markdown file!")
+        sys.exit(1)
+
+    if (not os.path.isfile(args.contacts)) or (not args.contacts.lower().endswith(".csv")):
+        print("The contacts file should be a CSV file!")
+        sys.exit(1)
+
+    if os.path.exists(args.outbox) and ((not os.path.isdir(args.outbox)) or len(os.listdir(args.outbox)) > 0):
+        print("The outbox folder should be an empty folder, or not exist at all!")
+        sys.exit(1)
+
+    # Read template file
+    with open(args.template, "r", encoding='utf-8-sig') as mdfile:
+        template = mdfile.read()
+
+    # Read contacts file
+    with open(args.contacts, "r", encoding='utf-8-sig') as csvfile:
+        contacts = list(csv.DictReader(csvfile))
+
+    generate_emails(template, contacts, args.outbox)
 
 
 if __name__ == "__main__":
