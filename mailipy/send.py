@@ -85,7 +85,7 @@ def main():
     send_emails(server, emails, args.outbox, args.sent, args.sleep)
 
 
-def send_emails(server, emails, outbox_dir, sent_dir, sleep_after_send):
+def send_emails(server: smtplib.SMTP_SSL, emails, outbox_dir, sent_dir, sleep_after_send):
     # Create sent folder if necessary
     if not os.path.exists(sent_dir):
         os.mkdir(sent_dir)
@@ -93,20 +93,17 @@ def send_emails(server, emails, outbox_dir, sent_dir, sleep_after_send):
     for eml in emails:
         msg = email.message_from_file(open(os.path.join(outbox_dir, eml)))
         try:
-            rcpt = [msg["To"]]
             extra = []
             if "Cc" in msg:
-                rcpt += msg["Cc"].split(", ")
                 extra += ["cc: " + msg["Cc"]]
             if "Bcc" in msg:
-                rcpt += msg["Bcc"].split(", ")
                 extra += ["bcc: " + msg["Bcc"]]
             if extra:
                 extra = " (%s)" % " | ".join(extra)
             else:
                 extra = ""
             print("Sending email to %s%s..." % (msg["To"], extra))
-            server.sendmail(msg["From"], rcpt, msg.as_string())
+            server.send_message(msg)
 
             # On success, move the message from the outbox to the sent folder
             shutil.move(os.path.join(outbox_dir, eml), os.path.join(sent_dir, eml))
