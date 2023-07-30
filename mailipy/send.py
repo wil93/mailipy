@@ -3,7 +3,7 @@
 import argparse
 import email
 import getpass
-import os
+import pathlib
 import shutil
 import smtplib
 import ssl
@@ -20,21 +20,21 @@ def main():
     parser = argparse.ArgumentParser(description="Bulk send emails from the 'outbox' folder.")
     parser.add_argument("server", help="the URL of the SMTP server, including the port")
     parser.add_argument("username", help="the username to login to the mail server")
-    parser.add_argument("outbox", help="the folder where to access the emails that should be sent")
-    parser.add_argument("sent", nargs="?", default="sent", help="the folder where to move the emails sent (default: sent)")
+    parser.add_argument("outbox", help="the folder where to access the emails that should be sent", type=pathlib.Path)
+    parser.add_argument("sent", nargs="?", default=pathlib.Path("./sent"), help="the folder where to move the emails sent (default: sent)", type=pathlib.Path)
     parser.add_argument("--continue", help="continue sending, even if the 'sent' folder is not empty", action="store_true", dest="continue_")
     parser.add_argument("--password-file", help="path to a file containing the password to login to the mail server")
     parser.add_argument("--ssl", help="SSL mode to use", choices=["auto", "none", "starttls", "ssl"], default="auto")
     parser.add_argument("--sleep", help="seconds to wait after each sent email", type=int, default=0)
     args = parser.parse_args()
 
-    if (not os.path.isdir(args.outbox)) or len(os.listdir(args.outbox)) == 0:
+    if not args.outbox.is_dir() or len(list(args.outbox.iterdir())) == 0:
         print("The outbox folder should contain some emails!")
         sys.exit(1)
 
     # FIXME: skip the check if --continue was specified... but actually we should still check that: 'sent' is a directory AND it doesn't contain files which also exist in 'outbox'
     if not args.continue_:
-        if os.path.exists(args.sent) and ((not os.path.isdir(args.sent)) or len(os.listdir(args.sent)) > 0):
+        if args.sent.exists() and (not args.sent.is_dir() or len(list(args.sent.iterdir())) > 0):
             print("The sent folder should be an empty folder, or not exist at all!")
             sys.exit(1)
 
@@ -45,9 +45,9 @@ def main():
     host, port = args.server.split(":")
     port = int(port)
 
-    emails = os.listdir(args.outbox)
+    emails = list(args.outbox.iterdir())
 
-    if any((not os.path.isfile(os.path.join(args.outbox, eml))) or (not eml.lower().endswith(".eml")) for eml in emails):
+    if any(not eml_path.is_file() or eml_path.suffix.lower() != ".eml" for eml_path in emails):
         print("The outbox folder contains invalid files!")
         sys.exit(1)
 
@@ -82,16 +82,16 @@ def main():
                     raise
 
     server.login(args.username, password)
-    send_emails(server, emails, args.outbox, args.sent, args.sleep)
+    send_emails(server, emails, args.sent, args.sleep)
 
 
-def send_emails(server: smtplib.SMTP_SSL, emails, outbox_dir, sent_dir, sleep_after_send):
+def send_emails(server: smtplib.SMTP_SSL, emails: list[pathlib.Path], sent_dir: pathlib.Path, sleep_after_send: int):
     # Create sent folder if necessary
-    if not os.path.exists(sent_dir):
-        os.mkdir(sent_dir)
+    if not sent_dir.exists():
+        sent_dir.mkdir()
 
     for eml in emails:
-        msg = email.message_from_file(open(os.path.join(outbox_dir, eml)))
+        msg = email.message_from_file(eml.open())
         try:
             extra = []
             if "Cc" in msg:
@@ -106,7 +106,7 @@ def send_emails(server: smtplib.SMTP_SSL, emails, outbox_dir, sent_dir, sleep_af
             server.send_message(msg)
 
             # On success, move the message from the outbox to the sent folder
-            shutil.move(os.path.join(outbox_dir, eml), os.path.join(sent_dir, eml))
+            shutil.move(eml, sent_dir / eml.name)
         except Exception:
             print("[!] Error when sending email to %s" % (msg["To"]))
 

@@ -1,17 +1,23 @@
 import email
 import os
+import pathlib
 import shutil
 
 from mailipy.gen import generate_emails
+from mailipy.gen import render_from
+
+
+def test_render_from():
+    assert render_from('實驗', '實驗@實驗.com') == '=?utf-8?b?5a+m6amX?= <實驗@實驗.com>'
 
 
 def test_create_two_emails(tmp_path):
-    shutil.copy('logo.png', os.path.join(tmp_path, 'logo.png'))
-    shutil.copy('logo.png', os.path.join(tmp_path, 'test.png'))
+    shutil.copy('logo.png', tmp_path / 'logo.png')
+    shutil.copy('logo.png', tmp_path / 'test.png')
 
     os.chdir(tmp_path)
 
-    outbox = 'outbox'
+    outbox = pathlib.Path('./outbox')
 
     template = """---
 
@@ -42,13 +48,13 @@ Test email for {{name}}.
 
     generate_emails(template, contacts, outbox)
 
-    assert len(os.listdir(outbox)) == 2
+    assert len(list(outbox.iterdir())) == 2
 
-    for file_name in os.listdir(outbox):
-        msg = email.message_from_file(open(os.path.join(outbox, file_name)))
+    for eml in outbox.iterdir():
+        msg = email.message_from_file(eml.open())
 
         email_without_domain = msg['To'].split('@')[0]
-        assert file_name.startswith(email_without_domain)
+        assert eml.name.startswith(email_without_domain)
         assert msg.is_multipart()
         assert 'cc@example.com' in msg['cc']
         assert 'bcc@example.com' in msg['bcc']

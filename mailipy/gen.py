@@ -4,10 +4,11 @@ import argparse
 import base64
 import csv
 import datetime
+import email.message
 import email.utils
 import json
 import mimetypes
-import os
+import pathlib
 import random
 import re
 import sys
@@ -42,7 +43,7 @@ BASE_HTML = """<!DOCTYPE html>
 csv.field_size_limit(10 * 1024 * 1024)  # 10 MB
 
 
-def create_attachment(main_msg, file_path):
+def create_attachment(main_msg: email.message.Message, file_path: pathlib.Path):
     content_type, _ = mimetypes.guess_type(file_path)
 
     if content_type is None:
@@ -63,12 +64,11 @@ def create_attachment(main_msg, file_path):
         with open(file_path, 'rb') as fp:
             msg = MIMEApplication(fp.read())
 
-    filename = os.path.basename(file_path)
-    msg.add_header('Content-Disposition', 'attachment', filename=filename)
+    msg.add_header('Content-Disposition', 'attachment', filename=file_path.name)
     main_msg.attach(msg)
 
 
-def embed_image(main_msg, image_path, cid):
+def embed_image(main_msg: email.message.Message, image_path: pathlib.Path, cid: int):
     content_type, _ = mimetypes.guess_type(image_path)
 
     if content_type is None:
@@ -80,11 +80,10 @@ def embed_image(main_msg, image_path, cid):
         print(f"Error: the {image_path} file does not seem to be an image.")
         return
 
-    with open(image_path, 'rb') as fp:
+    with image_path.open('rb') as fp:
         msg = MIMEImage(fp.read())
 
-        filename = os.path.basename(image_path)
-        msg.add_header('Content-Disposition', 'attachment', filename=filename)
+        msg.add_header('Content-Disposition', 'attachment', filename=image_path.name)
         msg.add_header('X-Attachment-Id', f'{cid}')
         msg.add_header('Content-ID', f'<{cid}>')
 
@@ -103,7 +102,7 @@ def render_from(name, email):
     return f"=?utf-8?b?{base64.b64encode(name.encode()).decode()}?= <{email}>"
 
 
-def generate_emails(template: str, contacts: list[dict], outbox: str):
+def generate_emails(template: str, contacts: list[dict], outbox: pathlib.Path):
     if len(contacts) == 0:
         print("No contacts found!")
         sys.exit(1)
@@ -114,8 +113,8 @@ def generate_emails(template: str, contacts: list[dict], outbox: str):
         sys.exit(1)
 
     # Create the outbox folder if necessary
-    if not os.path.exists(outbox):
-        os.mkdir(outbox)
+    if not outbox.exists():
+        outbox.mkdir()
 
     # jinja2 with builtin support (e.g. zip, len, max, ...)
     env = jinja2.Environment(loader=jinja2.BaseLoader)
@@ -174,17 +173,19 @@ def generate_emails(template: str, contacts: list[dict], outbox: str):
 
         # Attach files
         for f in config.get("attach", []):
-            create_attachment(msg, f)
+            create_attachment(msg, pathlib.Path(f))
 
         # Embed images
         for image in config.get("images", []):
-            embed_image(msg, image["path"], image["cid"])
+            embed_image(msg, pathlib.Path(image["path"]), image["cid"])
 
         # Write the .eml file
         eml_filename = msg["To"].split("@")[0] + "-"
         eml_filename += "".join(filter(lambda c: '0' <= c <= '9', msg["Message-Id"]))
         eml_filename += ".eml"
-        with open(os.path.join(outbox, eml_filename), "w") as outfile:
+
+        eml_path = outbox / eml_filename
+        with eml_path.open("w") as outfile:
             gen = Generator(outfile)
             gen.flatten(msg)
 
@@ -200,29 +201,29 @@ def generate_emails(template: str, contacts: list[dict], outbox: str):
 
 def main():
     parser = argparse.ArgumentParser(description="Generate emails to bulk send later.")
-    parser.add_argument("template", help="a Markdown formatted document with a YAML front-matter")
-    parser.add_argument("contacts", help="a CSV file with the contacts whom to send emails to")
-    parser.add_argument("outbox", nargs="?", default="outbox", help="a folder where to save the emails (default: outbox)")
+    parser.add_argument("template", help="a Markdown formatted document with a YAML front-matter", type=pathlib.Path)
+    parser.add_argument("contacts", help="a CSV file with the contacts whom to send emails to", type=pathlib.Path)
+    parser.add_argument("outbox", nargs="?", default=pathlib.Path("./outbox"), help="a folder where to save the emails (default: outbox)", type=pathlib.Path)
     args = parser.parse_args()
 
-    if (not os.path.isfile(args.template)) or (not args.template.lower().endswith(".md")):
+    if not args.template.is_file() or args.template.suffix.lower() != ".md":
         print("The template file should be a Markdown file!")
         sys.exit(1)
 
-    if (not os.path.isfile(args.contacts)) or (not args.contacts.lower().endswith(".csv")):
+    if not args.contacts.is_file() or args.contacts.suffix.lower() != ".csv":
         print("The contacts file should be a CSV file!")
         sys.exit(1)
 
-    if os.path.exists(args.outbox) and ((not os.path.isdir(args.outbox)) or len(os.listdir(args.outbox)) > 0):
+    if args.outbox.exists() and (not args.outbox.is_dir() or len(list(args.outbox.iterdir())) > 0):
         print("The outbox folder should be an empty folder, or not exist at all!")
         sys.exit(1)
 
     # Read template file
-    with open(args.template, "r", encoding='utf-8-sig') as mdfile:
+    with args.template.open("r", encoding='utf-8-sig') as mdfile:
         template = mdfile.read()
 
     # Read contacts file
-    with open(args.contacts, "r", encoding='utf-8-sig') as csvfile:
+    with args.contacts.open("r", encoding='utf-8-sig') as csvfile:
         contacts = list(csv.DictReader(csvfile))
 
     generate_emails(template, contacts, args.outbox)
