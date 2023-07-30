@@ -16,6 +16,35 @@ def read_password_from_file(file_path):
         return f.readline().strip()
 
 
+def send_emails(server: smtplib.SMTP_SSL, emails: list[pathlib.Path], sent_dir: pathlib.Path, sleep_after_send: int):
+    # Create sent folder if necessary
+    if not sent_dir.exists():
+        sent_dir.mkdir()
+
+    for eml in emails:
+        msg = email.message_from_file(eml.open())
+        try:
+            extra = []
+            if "Cc" in msg:
+                extra += ["cc: " + msg["Cc"]]
+            if "Bcc" in msg:
+                extra += ["bcc: " + msg["Bcc"]]
+            if extra:
+                extra = " (%s)" % " | ".join(extra)
+            else:
+                extra = ""
+            print("Sending email to %s%s..." % (msg["To"], extra))
+            server.send_message(msg)
+
+            # On success, move the message from the outbox to the sent folder
+            shutil.move(eml, sent_dir / eml.name)
+        except Exception:
+            print("[!] Error when sending email to %s" % (msg["To"]))
+
+        if sleep_after_send > 0:
+            time.sleep(sleep_after_send)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Bulk send emails from the 'outbox' folder.")
     parser.add_argument("server", help="the URL of the SMTP server, including the port")
@@ -83,35 +112,6 @@ def main():
 
     server.login(args.username, password)
     send_emails(server, emails, args.sent, args.sleep)
-
-
-def send_emails(server: smtplib.SMTP_SSL, emails: list[pathlib.Path], sent_dir: pathlib.Path, sleep_after_send: int):
-    # Create sent folder if necessary
-    if not sent_dir.exists():
-        sent_dir.mkdir()
-
-    for eml in emails:
-        msg = email.message_from_file(eml.open())
-        try:
-            extra = []
-            if "Cc" in msg:
-                extra += ["cc: " + msg["Cc"]]
-            if "Bcc" in msg:
-                extra += ["bcc: " + msg["Bcc"]]
-            if extra:
-                extra = " (%s)" % " | ".join(extra)
-            else:
-                extra = ""
-            print("Sending email to %s%s..." % (msg["To"], extra))
-            server.send_message(msg)
-
-            # On success, move the message from the outbox to the sent folder
-            shutil.move(eml, sent_dir / eml.name)
-        except Exception:
-            print("[!] Error when sending email to %s" % (msg["To"]))
-
-        if sleep_after_send > 0:
-            time.sleep(sleep_after_send)
 
 
 if __name__ == "__main__":
