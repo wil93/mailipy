@@ -58,3 +58,13 @@ request.
    local changes. You can verify that you're running a different binary than the
    one installed with `pip` by running `which mailipy-gen`: the command will
    return the full path of the binary you're using.
+
+## Running tests
+
+After installing with `pipenv install` and entering the `pipenv shell`, run the
+following:
+
+    $ pytest
+
+The command will search recursively for files named `*_test.py` and run them.
+See the [pytest documentation](https://docs.pytest.org/en/latest/contents.html).
