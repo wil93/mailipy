@@ -16,10 +16,15 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install pipx and poetry
+        run: |
+          sudo apt update
+          sudo apt install pipx
+          pipx ensurepath
+          pipx install poetry
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip pipenv
-          pipenv install --dev
+          poetry install
       - name: Test with pytest
         run: |
-          pipenv run pytest
+          poetry run pytest

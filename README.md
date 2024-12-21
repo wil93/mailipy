@@ -48,20 +48,18 @@ request.
 
 ## Running a local version of Mailipy
 
-1. Make sure you have [pipenv](https://pipenv.pypa.io/) installed in your
+1. Make sure you have [poetry](https://python-poetry.org/) installed in your
    system.
-2. Run `pipenv install` followed by `pipenv shell` from the root of the source
-   directory.
-3. Install by running `python setup.py install` from the root of the source
+2. Run `poetry install` followed by `poetry shell` from the root of the source
    directory.
 4. Now you can run `mailipy-gen` and `mailipy-send`, and these will include your
    local changes. You can verify that you're running a different binary than the
-   one installed with `pip` by running `which mailipy-gen`: the command will
+   globally installed one by running `which mailipy-gen`: the command will
    return the full path of the binary you're using.
 
 ## Running tests
 
-After installing with `pipenv install` and entering the `pipenv shell`, run the
+After installing with `poetry install` and entering the `poetry shell`, run the
 following:
 
     $ pytest
