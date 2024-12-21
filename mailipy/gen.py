@@ -7,11 +7,14 @@ import datetime
 import email.message
 import email.utils
 import json
+import jinja2
+import markdown
 import mimetypes
 import pathlib
 import random
 import re
 import sys
+import yaml
 from email.generator import Generator
 from email.mime.application import MIMEApplication
 from email.mime.audio import MIMEAudio
@@ -19,9 +22,7 @@ from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-import jinja2
-import markdown
-import yaml
+from importlib.metadata import version
 
 
 YAML_FRONT_MATTER = r"\A(---\s*\n.*?\n?)^((---|\.\.\.)\s*$\n?)(.*)"
@@ -207,6 +208,12 @@ def main():
     parser.add_argument("template", help="a Markdown formatted document with a YAML front-matter", type=pathlib.Path)
     parser.add_argument("contacts", help="a CSV file with the contacts whom to send emails to", type=pathlib.Path)
     parser.add_argument("outbox", nargs="?", default=pathlib.Path("./outbox"), help="a folder where to save the emails (default: outbox)", type=pathlib.Path)
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version="mailipy {v}".format(v=version("mailipy")),
+    )
     args = parser.parse_args()
 
     if not args.template.is_file() or args.template.suffix.lower() != ".md":

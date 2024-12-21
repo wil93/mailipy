@@ -10,6 +10,8 @@ import ssl
 import sys
 import time
 
+from importlib.metadata import version
+
 
 def read_password_from_file(file_path):
     with open(file_path) as f:
@@ -55,6 +57,12 @@ def main():
     parser.add_argument("--password-file", help="path to a file containing the password to login to the mail server")
     parser.add_argument("--ssl", help="SSL mode to use", choices=["auto", "none", "starttls", "ssl"], default="auto")
     parser.add_argument("--sleep", help="seconds to wait after each sent email", type=int, default=0)
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version="mailipy {v}".format(v=version("mailipy")),
+    )
     args = parser.parse_args()
 
     if not args.outbox.is_dir() or len(list(args.outbox.iterdir())) == 0:

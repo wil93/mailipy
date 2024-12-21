@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="mailipy",
-    version="0.0.8",
+    version="0.1",
     author="William Di Luigi",
     author_email="williamdiluigi@gmail.com",
     description="Bulk send emails easily",
@@ -19,9 +19,9 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
-        'jinja2',
-        'markdown',
-        'pyyaml',
+        "jinja2",
+        "markdown",
+        "pyyaml",
     ],
-    python_requires='>=3.6',
+    python_requires=">=3.8",
 )
