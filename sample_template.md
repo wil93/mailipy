@@ -6,6 +6,7 @@ cc:       []
 bcc:      []
 subject:  "Invito per il terzo round di allenamento delle ITACPC 🍕"
 msgid:    "<%s@itacpc.it>"
+list-unsubscribe: "<mailto: unsubscribe@itacpc.it?subject=Bye>"
 attach:   []
 images:
   - path: "./logo.png"

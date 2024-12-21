@@ -28,6 +28,7 @@ bcc:      ["bcc@example.com"]
 reply-to: "info@example.com"
 subject:  "Invitation for {{name}}"
 msgid:    "<%s@example.com>"
+list-unsubscribe: "<mailto: unsubscribe@example.com?subject=Bye>"
 attach:
   - "test.png"
 images:
@@ -59,6 +60,7 @@ Test email for {{name}}.
         assert 'cc@example.com' in msg['cc']
         assert 'bcc@example.com' in msg['bcc']
         assert 'info@example.com' in msg['reply-to']
+        assert 'mailto: unsubscribe@example.com' in msg['list-unsubscribe']
 
         multipart, attachment, embedded_image = msg.get_payload()
         plaintext, html = multipart.get_payload()
