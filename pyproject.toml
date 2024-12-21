@@ -19,6 +19,10 @@ pytest = "^8.3.4"
 mailipy-gen = "mailipy.gen:main"
 mailipy-send = "mailipy.send:main"
 
+[[tool.poetry.source]]
+name = "pypi"
+priority = "primary"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
