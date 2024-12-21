@@ -158,7 +158,7 @@ def generate_emails(template: str, contacts: list[dict], outbox: pathlib.Path):
             msg["Reply-To"] = config["reply-to"]
 
         if "list-unsubscribe" in config:
-            msg["List-Unsubscribe"] = f"<{config['list-unsubscribe']}>"
+            msg["List-Unsubscribe"] = config["list-unsubscribe"]
 
         msg["Subject"] = config["subject"]
         msg["Date"] = email.utils.formatdate()
